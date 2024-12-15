@@ -5,25 +5,25 @@ import { ApiResponse } from "../Utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import bcrypt from 'bcrypt'
 
-// const generateAccessandRefreshToken = async (userId) => {
-//     try {
-//         const admin = await User.findById(userId);
-//         if (!admin) {
-//             throw new ApiError(404, "Admin not found"); // ✅ Added null check for `admin`.
-//         }
+const generateAccessandRefreshToken = async (userId) => {
+    try {
+        const admin = await User.findById(userId);
+        if (!admin) {
+            throw new ApiError(404, "Admin not found"); // ✅ Added null check for `admin`.
+        }
 
-//         const accessToken = admin.generateAccessToken(); // ✅ Now safe because `admin` is guaranteed to exist.
-//         const refreshToken = admin.generateRefreshToken(); // ✅ Safe after null check.
+        const accessToken = admin.generateAccessToken(); // ✅ Now safe because `admin` is guaranteed to exist.
+        const refreshToken = admin.generateRefreshToken(); // ✅ Safe after null check.
 
-//         admin.refreshToken = refreshToken;
-//         await admin.save({ validateBeforeSave: false });
+        admin.refreshToken = refreshToken;
+        await admin.save({ validateBeforeSave: false });
 
-//         return { refreshToken, accessToken };
-//     } catch (error) {
-//         console.error("Error in token generation:", error); // ✅ Added logging for debugging.
-//         throw new ApiError(500, "Something went wrong while generating refresh token and access token");
-//     }
-// };
+        return { refreshToken, accessToken };
+    } catch (error) {
+        console.error("Error in token generation:", error); // ✅ Added logging for debugging.
+        throw new ApiError(500, "Something went wrong while generating refresh token and access token");
+    }
+};
 
 
 const generateAccessandRefreshTokenStudent = async (userId) => {
@@ -134,46 +134,44 @@ const studentLogin = asyncHandler(async (req, res) => {
 
 const registerAdmin = asyncHandler(async (req, res) => {
     const { name, email, username, password } = req.body;
+if([name,email,username,password].some((field)=>field?.trim()==="")
+){
+    throw new ApiError(400, "All fields are require")
+}
 
-    // Validate request body
-    if (!name || !email || !username || !password) {
-        return res.status(400).json({
-            message: "All fields (name, email, username, password) are required!",
-        });
-    }
+const existAdmin = await User.findOne({
+    $or:[{email}, {username}]
+})
 
-    try {
-        // Check for existing user using email or username
-        const existingUser = await User.findOne({
-            $or: [{ email }, { username }],
-        });
+if(existAdmin){
+    throw new ApiError(409, "Admin already exist with this email or username")
+}
+   const admin = await User.create({
+    name,
+    username:username.toLowerCase(),
+    email,
+    password,
+    role: 'admin',
 
-        if (existingUser) {
-            throw new ApiError(409, "User already exists with this email or username");
-        }
+   })
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+   console.log("Amin created", admin);
 
-        // Create new admin instance
-        const newAdmin = new User({
-            name,
-            email,
-            username,
-            password: hashedPassword,
-            role: "admin", // Set role to 'admin'
-        });
 
-        await newAdmin.save();
+   const createAdmin = await User.findById(admin._id).select(
+    "-password -refreshToken"
+   )
 
-        res.status(201).json({
-            message: "Admin registered successfully!",
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: "Server error",
-        });
-    }
+   console.log("Create admin Details", createAdmin);
+
+   if(!createAdmin){
+    throw new ApiError(500, "something went wrong while registering Admin")
+   }
+   
+   return res.status(201).json(
+    new ApiError(200, createAdmin, "Admin register successfully")
+   )
+   
 });
 
 
@@ -184,59 +182,45 @@ const registerAdmin = asyncHandler(async (req, res) => {
 const adminLogin = asyncHandler(async (req, res) => {
     const { email, username, password } = req.body;
 
-    try {
-        const admin = await User.findOne({
-            $or: [{ email }, { username }],
-            role: "admin"
-        });
-        if (!admin) {
-            return res.status(400).json({
-                message: "Admin not found!"
-            })
-        }
-
-        const isMatch = await bcrypt.compare(password, admin.password);
-        if (!isMatch) {
-            return res.status(400).json({
-                message: "Invalid credentials!"
-            });
-        }
-
-        // const accessToken = admin.generateAccessToken();
-        // const refreshToken = admin.generateAccessToken();
-
-        const { accessToken, refreshToken } = await generateAccessandRefreshToken(admin._id)
-        const loggedInAdmin = await User.findById(admin._id).select("-password -refreshToken")
-        const options = {
-            httpOnly: true,
-            secure: true,
-        }
-        return res.status(200)
-            .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", refreshToken, options)
-            .json(
-                new ApiResponse(
-                    200, {
-                    admin: loggedInAdmin, accessToken, refreshToken
-                },
-                    "User loggedIn Successfully"
-                ))
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: "server error"
-        })
+    if(!(username || email)){
+        throw new ApiError(400, "Username or email is require")
     }
+
+    const admin = await User.findOne({
+        $or:[{username}, {email}]
+    })
+
+    if(!admin){
+        throw new ApiError(404, "Admin does not found")
+    }
+
+
+    const isPasswordValid = await admin.isPasswordCorrect(password)
+    if(!isPasswordValid){
+        throw new ApiError(401, "Invalid Credential")
+    }
+
+const {accessToken, refreshToken}=await generateAccessandRefreshToken(admin._id)
+const loggedInAdmin = await User.findById(admin._id).select("-password -refreshToken")
+
+const options = {
+    httpOnly:true,
+    secure:true,
+}
+
+return res.status(200)
+.cookie("accessToken", accessToken, options)
+.cookie("refreshToken", refreshToken, options)
+.json(
+    new ApiResponse(
+        200,{
+            admin:loggedInAdmin,accessToken,refreshToken
+        },
+        "Admin loggedIn successfully"
+    )
+)
+
 });
-
-// student login
-
-
-
-
-
-
 
 const userLogout = asyncHandler(async (req, res) => {
     const { email, username } = req.body;
