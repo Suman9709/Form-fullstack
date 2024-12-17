@@ -4,6 +4,7 @@ import { User } from "../Models/userModel.js";
 import { ApiResponse } from "../Utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import bcrypt from 'bcrypt'
+import { Student } from "../Models/Studentmodel.js";
 
 const generateAccessandRefreshToken = async (userId) => {
     try {
@@ -28,7 +29,7 @@ const generateAccessandRefreshToken = async (userId) => {
 
 const generateAccessandRefreshTokenStudent = async (userId) => {
     try {
-        const student = await User.findById(userId);
+        const student = await Student.findById(userId);
         if (!student) {
             throw new ApiError(404, "Student not found");
         }
@@ -54,13 +55,13 @@ const generateAccessandRefreshTokenStudent = async (userId) => {
 
 // Register a Student
 const registerStudent = asyncHandler(async (req, res) => {
-    const { name, email, username, password, student_id, batch, contact } = req.body;
+    const { firstName, lastName, email, username, password, student_id, batch, contact } = req.body;
 
-    if ([name, email, username, password, student_id, batch, contact].some((field) => field?.trim() === "")) {
+    if ([firstName, lastName, email, username, password, student_id, batch, contact].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
-    const existingUser = await User.findOne({
+    const existingUser = await Student.findOne({
         $or: [{ email }, { username }]
     });
 
@@ -68,19 +69,20 @@ const registerStudent = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User already exists with this email or username");
     }
 
-    const student = await User.create({
-        name,
+    const student = await Student.create({
+        firstName,
+        lastName,
         username: username.toLowerCase(),
         email,
         password,
         role: 'student',
         student_id,
-        batch,
+        batch, 
         contact,
     });
 
     // Changes made here: using lean() method to get plain JavaScript object instead of Mongoose document
-    const createdStudent = await User.findById(student._id).select("-password -refreshToken"); // fixed issue with exclusion
+    const createdStudent = await Student.findById(student._id).select("-password -refreshToken"); // fixed issue with exclusion
 
     if (!createdStudent) {
         throw new ApiError(500, "Something went wrong while registering student");
@@ -99,7 +101,7 @@ const studentLogin = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Username or email is required");
     }
 
-    const student = await User.findOne({
+    const student = await Student.findOne({
         $or: [{ username }, { email }]
     });
 
@@ -114,7 +116,7 @@ const studentLogin = asyncHandler(async (req, res) => {
     }
 
     const { accessToken, refreshToken } = await generateAccessandRefreshTokenStudent(student._id);
-    const loggedInStudent = await User.findById(student._id).select("-password -refreshToken");
+    const loggedInStudent = await Student.findById(student._id).select("-password -refreshToken");
 
     const options = {
         httpOnly: true,
@@ -226,27 +228,56 @@ const adminLogin = asyncHandler(async (req, res) => {
 });
 
 const userLogout = asyncHandler(async (req, res) => {
-    const { email, username } = req.body;
+//     const { email, username } = req.body;
 
-    try {
-        const user = await User.findOne({
-            $or: [{ email }, { username }]
+//     try {
+//         const user = await User.findOne({
+//             $or: [{ email }, { username }]
 
-        })
+//         })
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found!" });
-        }
-        // Clear the refresh token for the user
-        user.refreshToken = null;
-        await user.save();
-        res.status(200).json({ message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} logged out successfully!` });
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found!" });
+//         }
+//         // Clear the refresh token for the user
+//         user.refreshToken = null;
+//         await user.save();
+//         res.status(200).json({ message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} logged out successfully!` });
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error during logout" });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: "Server error during logout" });
+//     }
+// })
+
+
+try {
+    const user = req.user;  // `req.user` is set by the verifyJWT middleware
+
+    if (!user) {
+        return res.status(404).json({ message: "User not found!" });
     }
-})
+    const role = user.role ? user.role : 'user';
+    // Clear the refresh token for the user or student
+    user.refreshToken = null;
+
+    // Save the changes to the database
+    await user.save();
+
+
+    res.clearCookie('accessToken', { 
+        httpOnly: true,    // Prevents JavaScript access to the cookie
+        secure:true,  // Set to true in production for HTTPS
+        sameSite: 'Strict',  // Prevents cross-site request forgery
+        path: '/'  // Set the path to the root of the site
+    });
+    // Send a success response
+    res.status(200).json({ message: `${role.charAt(0).toUpperCase() + role.slice(1)} logged out successfully!` });
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error during logout" });
+}
+});
 
 const refreshAccessTokenAdmin = asyncHandler(async (req, res) => {
     const incommingRefreshToken = req.cookie || req.refreshToken
@@ -307,11 +338,12 @@ const refreshAccessTokenStudent = asyncHandler(async (req, res) => {
             process.env.REFRESH_TOKEN_SECRET
         )
 
-        const student = await User.findById(decodeToken?._id)
+        const student = await Student.findById(decodeToken?._id)
 
         if (!student) {
             throw new ApiError(401, "Invalid refresh Token")
         }
+        
         if (incommingRefreshToken !== student?.refreshToken) {
             throw new ApiError(401, "refresh Token is used or expires")
         }

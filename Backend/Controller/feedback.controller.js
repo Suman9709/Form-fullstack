@@ -49,6 +49,6 @@ const SubmitFeedback = asyncHandler(async (req, res) => {
     }
 })
 
-export default {
+export {
     SubmitFeedback,
 }

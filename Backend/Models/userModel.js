@@ -27,10 +27,6 @@ const userSchema = new mongoose.Schema({
         type:String,
         eum:["Basic", "Intermediate", "Advance","Other"]
     },
-    contact:{
-        type:Number,
-        required:true,
-    },
     refreshToken: {
         type: String
     },
@@ -66,6 +62,8 @@ const expiresIn = process.env.JWT_ACCESS_TOKEN_EXPIRES || "5h"
             email:this.email,
             username:this.username,
             role:this.role,
+            student_id:this.student_id,
+            batch:this.batch,
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
