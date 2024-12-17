@@ -19,6 +19,18 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    student_id:{
+        type:String,
+        require:true,
+    },
+    batch:{
+        type:String,
+        eum:["Basic", "Intermediate", "Advance","Other"]
+    },
+    contact:{
+        type:Number,
+        required:true,
+    },
     refreshToken: {
         type: String
     },
