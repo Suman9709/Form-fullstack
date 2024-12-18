@@ -1,7 +1,9 @@
+// Models/studentmodel.js
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// Check if the model is already defined
 const studentSchema = new mongoose.Schema({
     firstName: {
         type: String,
@@ -11,13 +13,14 @@ const studentSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    student_id: {
-        type: String,
+    student_id: {  // This field should be an ObjectId
+        type:String,
         required: true,
+        // ref: 'Student',
     },
     batch: {
         type: String,
-        enum: ["Basic", "Intermediate", "Advanced", "Other"], 
+        enum: ["Basic", "Intermediate", "Advanced", "Other"],
         required: true,
     },
     contact: {
@@ -36,7 +39,14 @@ const studentSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    role: {
+        type: String,
+        enum: ['student', 'admin'],  // Add roles like 'admin' or 'student'
+        default: 'student',          // Default role should be 'student'
+        required: true,
+    },
 });
+
 
 // Pre-save hook to hash password
 studentSchema.pre("save", async function (next) {
@@ -64,6 +74,7 @@ studentSchema.methods.generateAccessToken = function () {
             username: this.username,
             student_id: this.student_id,
             batch: this.batch,
+            role: this.role,
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
@@ -86,4 +97,7 @@ studentSchema.methods.generateRefreshToken = function () {
     );
 };
 
-export const Student = mongoose.model("Student", studentSchema);
+// Check if the model already exists to prevent overwriting
+const Student = mongoose.models.Student || mongoose.model("Student", studentSchema);
+
+export { Student };

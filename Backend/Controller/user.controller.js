@@ -2,9 +2,12 @@ import { asyncHandler } from "../Utils/asyncHandle.js";
 import { ApiError } from "../Utils/ApiError.js";
 import { User } from "../Models/userModel.js";
 import { ApiResponse } from "../Utils/ApiResponse.js"
+import mongoose from "mongoose";
 import jwt from "jsonwebtoken"
 import bcrypt from 'bcrypt'
-import { Student } from "../Models/Studentmodel.js";
+// import { Student } from "../Models/Studentmodel.js";
+import { Student } from "../Models/studentmodel.js";
+
 
 const generateAccessandRefreshToken = async (userId) => {
     try {
@@ -27,9 +30,10 @@ const generateAccessandRefreshToken = async (userId) => {
 };
 
 
-const generateAccessandRefreshTokenStudent = async (userId) => {
+const generateAccessandRefreshTokenStudent = async (studentId) => {
     try {
-        const student = await Student.findById(userId);
+        const objectId = new mongoose.Types.ObjectId(studentId); 
+        const student = await Student.findById(objectId);
         if (!student) {
             throw new ApiError(404, "Student not found");
         }
@@ -228,28 +232,6 @@ const adminLogin = asyncHandler(async (req, res) => {
 });
 
 const userLogout = asyncHandler(async (req, res) => {
-//     const { email, username } = req.body;
-
-//     try {
-//         const user = await User.findOne({
-//             $or: [{ email }, { username }]
-
-//         })
-
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found!" });
-//         }
-//         // Clear the refresh token for the user
-//         user.refreshToken = null;
-//         await user.save();
-//         res.status(200).json({ message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} logged out successfully!` });
-
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Server error during logout" });
-//     }
-// })
-
 
 try {
     const user = req.user;  // `req.user` is set by the verifyJWT middleware
@@ -257,20 +239,28 @@ try {
     if (!user) {
         return res.status(404).json({ message: "User not found!" });
     }
+
+    // Get role (either 'admin' or 'student')
     const role = user.role ? user.role : 'user';
+
     // Clear the refresh token for the user or student
     user.refreshToken = null;
 
     // Save the changes to the database
-    await user.save();
+    if (user instanceof User) {
+        await user.save(); // For admin (User model)
+    } else if (user instanceof Student) {
+        await user.save(); // For student (Student model)
+    }
 
-
+    // Clear the access token cookie
     res.clearCookie('accessToken', { 
         httpOnly: true,    // Prevents JavaScript access to the cookie
-        secure:true,  // Set to true in production for HTTPS
+        secure: true,  // Set to true in production for HTTPS
         sameSite: 'Strict',  // Prevents cross-site request forgery
         path: '/'  // Set the path to the root of the site
     });
+
     // Send a success response
     res.status(200).json({ message: `${role.charAt(0).toUpperCase() + role.slice(1)} logged out successfully!` });
 } catch (error) {

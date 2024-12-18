@@ -19,14 +19,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    student_id:{
-        type:String,
-        require:true,
-    },
-    batch:{
-        type:String,
-        eum:["Basic", "Intermediate", "Advance","Other"]
-    },
     refreshToken: {
         type: String
     },
