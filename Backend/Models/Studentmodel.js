@@ -20,7 +20,7 @@ const studentSchema = new mongoose.Schema({
     },
     batch: {
         type: String,
-        enum: ["Basic", "Intermediate", "Advanced", "Other"],
+        enum: ["Basic", "Intermediate", "Advance", "Other"],
         required: true,
     },
     contact: {
