@@ -1,16 +1,42 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const AdminLogin = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const[error, setError] = useState("")
+  const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Handle login logic here
-    console.log("Username:", username, "Password:", password);
+    try {
+      const response = await fetch("http://localhost:5000/users/admin/login", {
+        method:"POST",
+        headers:{
+          "Content-Type":"Application/json"
+        },
+        body: JSON.stringify({username, email:username, password}),
+        credentials:"include",
+      });
+
+      const data = await response.json()
+
+      navigate("/AdminHome")
+
+      if(response.status === 201){
+        console.log("Admin LoggedIn Successfully", data);
+        
+      }
+      else{
+        setError(data.message)
+      }
+    } catch (error) {
+      setError("Error occured Please try again")
+      console.error(error)
+    }
   };
 
 
@@ -52,6 +78,7 @@ const AdminLogin = () => {
           className="w-full h-[50px] bg-white/10 rounded-sm p-3 mt-2 text-white text-sm"
           required
         />
+ {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
 
         <button
           type="submit"

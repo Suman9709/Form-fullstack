@@ -3,19 +3,37 @@ import InputBox from './InputBox';
 import { Link } from 'react-router-dom';
 
 const AdminRegistrationForm = () => {
-    const [Name, setName] = useState("");
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
-    const [[password], setPassword] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("")
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
-        console.log("firstname", Name);
+        try {
+           const response = await fetch("http://localhost:5000/users/adminRegister", {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({name, email, username, password})
+           }) ;
+           const data = await response.json()
+
+           if(response.status === 201){
+            console.log("Admin registration successful", data);
+            
+           }
+           else{
+            setError(data.message)
+           }
+        } catch (error) {
+          setError("An error occur Please try again")  
+          console.error(error)
+        }
     }
 
-    const handleBatch = (e) => {
-        setSelectBatch(e.target.value);
-    }
     return (
         <div className="bg-[#080710] w-full h-full flex justify-center items-center p-12">
 
@@ -30,7 +48,7 @@ const AdminRegistrationForm = () => {
                         label= "Name"
                         type="text"
                         id="name"
-                        value={Name}
+                        value={name}
                         placeholder="First Name"
                         onChange={(e) => setName(e.target.value)}
                     />
@@ -55,7 +73,8 @@ const AdminRegistrationForm = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-
+ {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
+ 
                     {/* Submit Button */}
                     <button
                         type="submit"

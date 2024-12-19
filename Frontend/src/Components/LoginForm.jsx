@@ -1,19 +1,55 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import Navbar from "./Navbar";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Handle login logic here
-    console.log("Username:", username, "Password:", password);
+
+    try {
+      const response = await fetch("http://localhost:5000/users/student/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "Application/json",
+        },
+        body: JSON.stringify({ username, email: username, password }),
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      // localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("firstName", data.firstName);
+      localStorage.setItem("lastName", data.lastName);
+
+        // Redirect to the StudentHome page on successful login
+        navigate("/StudentHome");
+
+      if (response.status === 201) {
+        console.log("Student loggedIn Successfully", data);
+
+      }
+      else {
+        setError(data.message)
+      }
+    } catch (error) {
+      setError("Error occured Please try again")
+      console.error(error)
+    }
+    // console.log("Username:", username, "Password:", password);
   };
 
   return (
-    <div className="bg-[#080710] h-screen flex justify-center items-center overflow-hidden">
+
+    <div className="bg-[#080710] h-screen flex flex-col justify-center items-center overflow-hidden">
+      {/* <Navbar /> */}
       <div className="absolute w-[350px] h-[450px]">
         <div className="absolute w-[180px] h-[180px] rounded-full bg-gradient-to-r from-[#1845ad] to-[#23a2f6] left-[-80px] top-[-80px]" />
         <div className="absolute w-[180px] h-[180px] rounded-full bg-gradient-to-r from-[#ff512f] to-[#f09819] right-[-80px] bottom-[-80px]" />
@@ -50,7 +86,7 @@ const LoginForm = () => {
           className="w-full h-[50px] bg-white/10 rounded-sm p-3 mt-2 text-white text-sm"
           required
         />
-
+        {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
         <button
           type="submit"
           className="w-full mt-12 p-4 bg-white text-[#080710] font-semibold text-lg rounded-md cursor-pointer"

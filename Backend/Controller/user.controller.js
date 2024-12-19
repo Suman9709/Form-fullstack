@@ -5,7 +5,6 @@ import { ApiResponse } from "../Utils/ApiResponse.js"
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken"
 import bcrypt from 'bcrypt'
-// import { Student } from "../Models/Studentmodel.js";
 import { Student } from "../Models/studentmodel.js";
 
 

@@ -8,16 +8,14 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
+    // origin: process.env.CORS_ORIGIN,
+    // credentials: true,
+
+    origin: "http://localhost:5173", // Your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow the necessary methods
+    credentials: true, // Allow cookies (important for JWTs)
 }))
 
-// const PORT = 5000;
-
-// app.listen(PORT, ()=>{
-//     console.log(`server is running on ${PORT}`);
-
-// })
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
