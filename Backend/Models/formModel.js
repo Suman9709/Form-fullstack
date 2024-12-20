@@ -18,23 +18,23 @@ const formSchema = new mongoose.Schema({
     },
     feedback: {
         overallExperience: {
-          type: Number, // Rating between 1 to 5
+          type: Number, 
           min: 1,
           max: 5,
           required: true,
         },
         satisfactionLevel: {
-          type: Number, // Rating between 1 to 5
+          type: Number, 
           min: 1,
           max: 5,
           required: true,
         },
         comments: {
-          type: String, // Open-ended feedback
-          maxlength: 500, // Optional limit to comment length
+          type: String, 
+          maxlength: 500, 
         },
         suggestions: {
-          type: String, // Suggestions for improvement
+          type: String,
           maxlength: 500,
         },
       },

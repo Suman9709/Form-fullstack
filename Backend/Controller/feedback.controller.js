@@ -5,15 +5,16 @@ import { asyncHandler } from "../Utils/asyncHandle.js";
 
 const SubmitFeedback = asyncHandler(async (req, res) => {
     try {
+        // Destructure the required fields from request body
         const { firstName, lastName, contact, feedback } = req.body;
 
+        // Check if any required field is missing
         if (!firstName || !lastName || !contact || !feedback) {
             throw new ApiError(400, "All fields are required");
         }
 
-        // check for the required feedback
-
-        const { overallExperience, satisfactionLevel } = feedback
+        // Check if feedback ratings are valid (between 1 and 5)
+        const { overallExperience, satisfactionLevel } = feedback;
         if (
             typeof overallExperience !== "number" ||
             typeof satisfactionLevel !== "number" ||
@@ -25,27 +26,37 @@ const SubmitFeedback = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Feedback rating must be between 1 to 5");
         }
 
-        // create feedback form 
+       
+        if (!req.user || !req.user._id) {
+            throw new ApiError(401, "User must be authenticated");
+        }
 
+        // Create a new feedback form
         const form = new Form({
-            userId: req.user._id,
+            userId: req.user._id,  // Ensure req.user._id exists
             firstName,
             lastName,
             contact,
             feedback,
         });
 
+       
         const savedForm = await form.save();
-        return res
-            .status(200)
-            .json(
-                new ApiResponse(200, {
-                    message: "Feedback from filled successfully"
-                })
-            )
-    } catch (error) {
-        res.status(500).json({ error: "An error occurred while submitting feedback" });
 
+       
+        return res.status(201).json(
+            new ApiResponse(201, {
+                message: "Feedback form submitted successfully",
+            })
+        );
+    } catch (error) {
+        console.error("Error occurred during feedback submission:", error); // Debug log
+        if (error instanceof ApiError) {
+            return res.status(error.statusCode).json({ error: error.message });
+        } else {
+          
+            return res.status(500).json({ error: "An error occurred while submitting feedback" });
+        }
     }
 })
 

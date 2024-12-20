@@ -1,55 +1,53 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import Navbar from "./Navbar";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
+    console.log("Login attempt with username:", username); // Debug log
 
     try {
       const response = await fetch("http://localhost:5000/users/student/login", {
         method: "POST",
         headers: {
-          "Content-Type": "Application/json",
+          "Content-Type": "application/json", // Make sure it's lowercase 'application/json'
         },
         body: JSON.stringify({ username, email: username, password }),
-        credentials: "include",
+        credentials: "include", // Ensure credentials are included
       });
       const data = await response.json();
+      console.log("Response data:", data); // Debug log
 
-      // localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("firstName", data.firstName);
-      localStorage.setItem("lastName", data.lastName);
+      if (response.status === 200) {  // Changed from 201 to 200 for login
+        // Store the token and user information in localStorage
+        const { accessToken, student } = data.data;
 
-        // Redirect to the StudentHome page on successful login
-        navigate("/StudentHome");
+        // Store the token and user information in localStorage
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("firstName", student.firstName);
+        localStorage.setItem("lastName", student.lastName);
 
-      if (response.status === 201) {
-        console.log("Student loggedIn Successfully", data);
-
-      }
-      else {
-        setError(data.message)
+        console.log("Logged in successfully, navigating to StudentHome");
+        // Redirect to the Student Home page after successful login
+        navigate("/StudentHome");  // Ensure this path is correct
+      } else {
+        console.error("No access token found in response data");
+        setError(data.message);
       }
     } catch (error) {
-      setError("Error occured Please try again")
-      console.error(error)
+      setError("Error occurred. Please try again.");
+      console.error("Login error:", error);
     }
-    // console.log("Username:", username, "Password:", password);
   };
 
   return (
-
     <div className="bg-[#080710] h-screen flex flex-col justify-center items-center overflow-hidden">
-      {/* <Navbar /> */}
       <div className="absolute w-[350px] h-[450px]">
         <div className="absolute w-[180px] h-[180px] rounded-full bg-gradient-to-r from-[#1845ad] to-[#23a2f6] left-[-80px] top-[-80px]" />
         <div className="absolute w-[180px] h-[180px] rounded-full bg-gradient-to-r from-[#ff512f] to-[#f09819] right-[-80px] bottom-[-80px]" />
@@ -75,7 +73,7 @@ const LoginForm = () => {
         />
 
         <label htmlFor="password" className="block text-lg font-medium text-white mt-6">
-          Password  <span className="text-red-500">*</span>
+          Password <span className="text-red-500">*</span>
         </label>
         <input
           type="password"

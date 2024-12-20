@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({showBatchSelect}) => {
   const navigate = useNavigate();
+  const[selectBatch, setSelectBatch] = useState("")
 
   // State to toggle the visibility of the profile dropdown menu
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -31,7 +32,7 @@ const Navbar = () => {
         localStorage.removeItem("lastName");
 
         // Redirect to the login page
-        navigate("/");
+        navigate("/login");
       } else {
         console.error("Logout failed:", data.message);
       }
@@ -61,7 +62,21 @@ const Navbar = () => {
           <li className='cursor-pointer'>Home</li>
           <li className='cursor-pointer'>Attendance</li>
         </ul>
-
+        {showBatchSelect && (
+          <select 
+            id="batch"
+            value={selectBatch}
+            onChange={(e) => setSelectBatch(e.target.value)}
+            className="w-full h-[50px] bg-white/10 rounded-sm p-3 mt-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="" className="bg-transparent text-black">Select a Batch</option>
+            <option value="Basic" className="bg-white/10 hover:bg-blue-200 text-black">Basic</option>
+            <option value="Intermediate" className="bg-white/10 hover:bg-blue-200 text-black">Intermediate</option>
+            <option value="Advanced" className="bg-white/10 hover:bg-blue-200 text-black">Advanced</option>
+            <option value="Other" className="bg-white/10 hover:bg-blue-200 text-black">Other</option>
+          </select>
+        )}
         {/* Profile Section with dropdown */}
         <div className='relative'>
           <div 

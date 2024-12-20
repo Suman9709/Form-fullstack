@@ -4,7 +4,12 @@ import Navbar from './Navbar'
 const AdminHomepage = () => {
   return (
     <div>
-        <Navbar/>
+        <Navbar showBatchSelect={true}/>
+
+
+
+
+
     </div>
   )
 }
