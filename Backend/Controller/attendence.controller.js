@@ -7,13 +7,15 @@ import mongoose from 'mongoose';
 // Admin can mark attendance for a student
 const markAttendance = asyncHandler(async (req, res) => {
     try {
+        // Log to verify that the controller is triggered
         console.log('Mark Attendance Controller Triggered');
 
-        // Admin check: only admins can mark attendance
-        if (req.user.role !== "admin") {
+        // Check if the logged-in user is an admin
+        if (req.user.role !== "admin" && req.user.role !== "institute") {
             throw new ApiError(403, "You are not authorized to mark attendance");
         }
 
+        // Destructure the input fields from the request body
         const { student_id, batch, status } = req.body;
 
         // Ensure all required fields are provided
@@ -27,7 +29,7 @@ const markAttendance = asyncHandler(async (req, res) => {
         }
 
         // Convert student_id to ObjectId if it's valid
-        const studentObjectId = new mongoose.Types.ObjectId(student_id); 
+        const studentObjectId = new mongoose.Types.ObjectId(student_id);
 
         // Find the student by ID
         const student = await Student.findById(studentObjectId);
@@ -45,6 +47,7 @@ const markAttendance = asyncHandler(async (req, res) => {
             },
         });
 
+        // If attendance is already marked for today, throw an error
         if (existingAttendance) {
             throw new ApiError(400, "Attendance for today is already marked");
         }
@@ -55,7 +58,7 @@ const markAttendance = asyncHandler(async (req, res) => {
             attendence_record: [
                 {
                     date: new Date(),
-                    status: status,  // 'P' or 'A'
+                    status: status,  // 'P' (Present) or 'A' (Absent)
                 },
             ],
         });
@@ -64,16 +67,17 @@ const markAttendance = asyncHandler(async (req, res) => {
         await newAttendance.save();
         console.log('Attendance marked successfully');
 
+        // Respond with the success message and attendance details
         res.status(201).json({
             message: "Attendance marked successfully",
             attendance: newAttendance,
         });
     } catch (error) {
+        // Log the error and send the error response
         console.error("Error occurred while marking attendance:", error);
         res.status(500).json({ message: "Server error during attendance marking" });
     }
 });
-
 
 
 

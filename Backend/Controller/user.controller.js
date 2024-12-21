@@ -6,24 +6,25 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken"
 import bcrypt from 'bcrypt'
 import { Student } from "../Models/studentmodel.js";
+import { InstituteModel } from "../Models/institutemodel.js";
 
 
 const generateAccessandRefreshToken = async (userId) => {
     try {
         const admin = await User.findById(userId);
         if (!admin) {
-            throw new ApiError(404, "Admin not found"); // ✅ Added null check for `admin`.
+            throw new ApiError(404, "Admin not found"); 
         }
 
-        const accessToken = admin.generateAccessToken(); // ✅ Now safe because `admin` is guaranteed to exist.
-        const refreshToken = admin.generateRefreshToken(); // ✅ Safe after null check.
+        const accessToken = admin.generateAccessToken(); 
+        const refreshToken = admin.generateRefreshToken(); 
 
         admin.refreshToken = refreshToken;
         await admin.save({ validateBeforeSave: false });
 
         return { refreshToken, accessToken };
     } catch (error) {
-        console.error("Error in token generation:", error); // ✅ Added logging for debugging.
+        console.error("Error in token generation:", error); 
         throw new ApiError(500, "Something went wrong while generating refresh token and access token");
     }
 };
@@ -37,19 +38,19 @@ const generateAccessandRefreshTokenStudent = async (studentId) => {
             throw new ApiError(404, "Student not found");
         }
 
-        const accessToken = student.generateAccessToken(); // Generate access token
-        const refreshToken = student.generateRefreshToken(); // Generate refresh token
+        const accessToken = student.generateAccessToken(); 
+        const refreshToken = student.generateRefreshToken(); 
 
         console.log("Generated access token:", accessToken);
         console.log("Generated refresh token:", refreshToken);
 
-        student.refreshToken = refreshToken; // Assign refresh token to student
+        student.refreshToken = refreshToken; 
 
-        await student.save(); // Save student with the refresh token
+        await student.save();
 
         console.log("Student saved with refresh token");
 
-        return { refreshToken, accessToken }; // Return tokens
+        return { refreshToken, accessToken }; 
     } catch (error) {
         console.error("Error in token generation:", error);
         throw new ApiError(500, "Something went wrong while generating refresh token and access token");
@@ -58,10 +59,15 @@ const generateAccessandRefreshTokenStudent = async (studentId) => {
 
 // Register a Student
 const registerStudent = asyncHandler(async (req, res) => {
-    const { firstName, lastName, email, username, password, student_id, batch, contact } = req.body;
+    const { firstName, lastName, email, username, password, student_id, batch, contact, instituteName } = req.body;
 
-    if ([firstName, lastName, email, username, password, student_id, batch, contact].some((field) => field?.trim() === "")) {
+    if ([firstName, lastName, email, username, password, student_id, batch, contact, instituteName].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
+    }
+    const institute = await InstituteModel.findOne({ name: instituteName });
+
+    if (!institute) {
+        throw new ApiError(400, "Invalid institute name provided");
     }
 
     const existingUser = await Student.findOne({
@@ -72,6 +78,7 @@ const registerStudent = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User already exists with this email or username");
     }
 
+    // Create a new student and associate the student with the institute
     const student = await Student.create({
         firstName,
         lastName,
@@ -80,23 +87,30 @@ const registerStudent = asyncHandler(async (req, res) => {
         password,
         role: 'student',
         student_id,
-        batch, 
+        batch,
         contact,
+        instituteName: institute.name,
+        institute: institute._id, 
     });
 
-    // Changes made here: using lean() method to get plain JavaScript object instead of Mongoose document
-    const createdStudent = await Student.findById(student._id).select("-password -refreshToken"); // fixed issue with exclusion
+    
+    const createdStudent = await Student.findById(student._id).select("-password -refreshToken");
 
+   
     if (!createdStudent) {
         throw new ApiError(500, "Something went wrong while registering student");
     }
 
-    return res.status(201).json(
-        new ApiError(200, createdStudent, "Student registered successfully")
-    );
+    
+    return res.status(201).json({
+        success: true,
+        data: createdStudent,
+        message: "Student registered successfully"
+    });
 });
 
-// Student Login
+
+
 const studentLogin = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -163,7 +177,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
 
     })
 
-    console.log("Amin created", admin);
+    console.log("Admin created", admin);
 
 
     const createAdmin = await User.findById(admin._id).select(
@@ -233,7 +247,8 @@ const adminLogin = asyncHandler(async (req, res) => {
 const userLogout = asyncHandler(async (req, res) => {
 
 try {
-    const user = req.user;  // `req.user` is set by the verifyJWT middleware
+    // `req.user` is set by the verifyJWT middleware
+    const user = req.user;  
 
     if (!user) {
         return res.status(404).json({ message: "User not found!" });
@@ -249,6 +264,9 @@ try {
     if (user instanceof User) {
         await user.save(); // For admin (User model)
     } else if (user instanceof Student) {
+        await user.save(); // For student (Student model)
+    }
+    else if (user instanceof InstituteModel) {
         await user.save(); // For student (Student model)
     }
 

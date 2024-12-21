@@ -14,7 +14,7 @@ const studentSchema = new mongoose.Schema({
         required: true,
     },
     student_id: {  // This field should be an ObjectId
-        type:String,
+        type: String,
         required: true,
         // ref: 'Student',
     },
@@ -41,10 +41,19 @@ const studentSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['student', 'admin'],  // Add roles like 'admin' or 'student'
+        enum: ['student', 'admin', 'institute'],  // Add roles like 'admin' or 'student'
         default: 'student',          // Default role should be 'student'
         required: true,
     },
+    institute: {  // New field to reference the institute
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "InstituteModel",
+        required: true,
+    },
+    instituteName: {  
+        type: String,
+        required: true, 
+    }, 
 });
 
 
@@ -75,6 +84,8 @@ studentSchema.methods.generateAccessToken = function () {
             student_id: this.student_id,
             batch: this.batch,
             role: this.role,
+            instituteName:this.instituteName,
+            institute: this.institute,
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
