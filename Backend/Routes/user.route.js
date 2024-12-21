@@ -20,12 +20,11 @@ router.route("/student/login")
     .post(studentLogin);  // Login for any student
 router.route("/institute/login").post(InstituteLogin)
 router.route("/logout").post(verifyJWT, userLogout)
-router.route("/student/feedbacks").post(verifyJWT, SubmitFeedback)
+router.route("/student/feedbacks").post( SubmitFeedback)
 
 router.get(
     "/institutestudents",
-    verifyJWT,
-    authorizeRole("institute"), // Only institutes can fetch their students
+    verifyJWT,authorizeRole("admin", "institute"), // Only institutes can fetch their students
     getInstituteStudents
 );
 // router.route("/markattendence").post(verifyJWT, authorizeRole, markAttendance)

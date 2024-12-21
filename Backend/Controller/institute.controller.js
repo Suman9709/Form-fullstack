@@ -109,24 +109,78 @@ const InstituteLogin = asyncHandler(async (req, res) => {
 
 
 
+// const getInstituteStudents = asyncHandler(async (req, res) => {
+//     try {
+//         // Check if the logged-in user is an institute
+//         if (req.user.role !== "institute") {
+//             throw new ApiError(403, "You are not authorized to view students");
+//         }
+//         const instituteName = req.body.instituteName || req.user.name;
+//         // Fetch all students associated with the institute
+//         const institute = await InstituteModel.findOne({ name: instituteName });
+//         if (!institute) {
+//             throw new ApiError(404, "Institute not found");
+//         }
+//         // const students = await Student.find({ instituteId: req.user._id }).select("-password -refreshToken");
+//         const students = await Student.find({ institute: institute._id }).select("-password -refreshToken");
+
+//         if (!students || students.length === 0) {
+//             throw new ApiError(404, "No students found for this institute");
+//         }
+
+//         res.status(200).json({
+//             message: "Students fetched successfully",
+//             students,
+//         });
+//     } catch (error) {
+//         console.error("Error occurred while fetching students:", error);
+//         res.status(500).json({ message: "Server error while fetching students" });
+//     }
+// });
 const getInstituteStudents = asyncHandler(async (req, res) => {
     try {
-        // Check if the logged-in user is an institute
-        if (req.user.role !== "institute") {
+        // Check if the logged-in user is either an admin or an institute
+        if (req.user.role !== "institute" && req.user.role !== "admin") {
             throw new ApiError(403, "You are not authorized to view students");
         }
 
-        // Fetch all students associated with the institute
-        const students = await Student.find({ instituteId: req.user._id }).select("-password -refreshToken");
+        // If the user is an institute, fetch students for their institute
+        if (req.user.role === "institute") {
+            const instituteName = req.body.instituteName || req.user.name;
+            // Fetch the institute by name
+            const institute = await InstituteModel.findOne({ name: instituteName });
+            if (!institute) {
+                throw new ApiError(404, "Institute not found");
+            }
 
-        if (!students || students.length === 0) {
-            throw new ApiError(404, "No students found for this institute");
+            // Fetch students belonging to this institute
+            const students = await Student.find({ institute: institute._id }).select("-password -refreshToken");
+
+            if (!students || students.length === 0) {
+                throw new ApiError(404, "No students found for this institute");
+            }
+
+            return res.status(200).json({
+                message: "Students fetched successfully",
+                students,
+            });
         }
 
-        res.status(200).json({
-            message: "Students fetched successfully",
-            students,
-        });
+        // If the user is an admin, fetch all students across all institutes
+        if (req.user.role === "admin") {
+            // Admin can access all students
+            const students = await Student.find().select("-password -refreshToken");
+
+            if (!students || students.length === 0) {
+                throw new ApiError(404, "No students found");
+            }
+
+            return res.status(200).json({
+                message: "Students fetched successfully",
+                students,
+            });
+        }
+
     } catch (error) {
         console.error("Error occurred while fetching students:", error);
         res.status(500).json({ message: "Server error while fetching students" });

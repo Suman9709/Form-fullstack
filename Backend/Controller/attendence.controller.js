@@ -5,12 +5,86 @@ import { asyncHandler } from "../Utils/asyncHandle.js";
 import mongoose from 'mongoose';
 
 // Admin can mark attendance for a student
+// const markAttendance = asyncHandler(async (req, res) => {
+//     try {
+//         // Log to verify that the controller is triggered
+//         console.log('Mark Attendance Controller Triggered');
+
+//         // Check if the logged-in user is an admin
+//         if (req.user.role !== "admin" && req.user.role !== "institute") {
+//             throw new ApiError(403, "You are not authorized to mark attendance");
+//         }
+
+//         // Destructure the input fields from the request body
+//         const { student_id, batch, status } = req.body;
+
+//         // Ensure all required fields are provided
+//         if (!student_id || !batch || !status) {
+//             throw new ApiError(400, "Please provide all the required fields");
+//         }
+
+//         // Validate student_id format
+//         if (!mongoose.Types.ObjectId.isValid(student_id)) {
+//             throw new ApiError(400, "Invalid student_id format");
+//         }
+
+//         // Convert student_id to ObjectId if it's valid
+//         const studentObjectId = new mongoose.Types.ObjectId(student_id);
+
+//         // Find the student by ID
+//         const student = await Student.findById(studentObjectId);
+//         if (!student) {
+//             throw new ApiError(404, "Student not found");
+//         }
+
+//         // Check if attendance already exists for the student for today
+//         const today = new Date();
+//         const existingAttendance = await Attendence.findOne({
+//             user_id: studentObjectId,  // Match the `user_id` in the attendance
+//             "attendence_record.date": {
+//                 $gte: new Date(today.setHours(0, 0, 0, 0)),  // Start of the day
+//                 $lt: new Date(today.setHours(23, 59, 59, 999)),  // End of the day
+//             },
+//         });
+
+//         // If attendance is already marked for today, throw an error
+//         if (existingAttendance) {
+//             throw new ApiError(400, "Attendance for today is already marked");
+//         }
+
+//         // Create a new attendance record
+//         const newAttendance = new Attendence({
+//             user_id: studentObjectId,  // Use ObjectId for `user_id`
+//             attendence_record: [
+//                 {
+//                     date: new Date(),
+//                     status: status,  // 'P' (Present) or 'A' (Absent)
+//                 },
+//             ],
+//         });
+
+//         // Save the attendance record
+//         await newAttendance.save();
+//         console.log('Attendance marked successfully');
+
+//         // Respond with the success message and attendance details
+//         res.status(201).json({
+//             message: "Attendance marked successfully",
+//             attendance: newAttendance,
+//         });
+//     } catch (error) {
+//         // Log the error and send the error response
+//         console.error("Error occurred while marking attendance:", error);
+//         res.status(500).json({ message: "Server error during attendance marking" });
+//     }
+// });
+
 const markAttendance = asyncHandler(async (req, res) => {
     try {
         // Log to verify that the controller is triggered
         console.log('Mark Attendance Controller Triggered');
 
-        // Check if the logged-in user is an admin
+        // Check if the logged-in user is an admin or institute
         if (req.user.role !== "admin" && req.user.role !== "institute") {
             throw new ApiError(403, "You are not authorized to mark attendance");
         }
@@ -35,6 +109,18 @@ const markAttendance = asyncHandler(async (req, res) => {
         const student = await Student.findById(studentObjectId);
         if (!student) {
             throw new ApiError(404, "Student not found");
+        }
+
+        
+        if (req.user.role === 'admin') {
+            // Admins can mark attendance for any student
+        } else if (req.user.role === 'institute') {
+            // Ensure the logged-in institute matches the student's institute
+            if (req.user._id.toString() !== student.institute.toString()) {
+                throw new ApiError(403, "You are not authorized to mark attendance for this student");
+            }
+        } else {
+            throw new ApiError(403, "You are not authorized to mark attendance");
         }
 
         // Check if attendance already exists for the student for today
@@ -78,6 +164,7 @@ const markAttendance = asyncHandler(async (req, res) => {
         res.status(500).json({ message: "Server error during attendance marking" });
     }
 });
+
 
 
 

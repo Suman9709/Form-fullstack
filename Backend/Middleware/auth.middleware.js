@@ -57,18 +57,27 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         console.log("Decoded Token:", decodedToken);  // Debugging line, check decoded token
 
         // Find user, student, or institute based on the decoded token
-        let user = await User.findById(decodedToken?._id).select("-password -refreshToken");
-        let student = await Student.findById(decodedToken?._id).select("-password -refreshToken");
+        let user = await User.findById(decodedToken?._id).select("-password -refreshToken")
+        let student = await Student.findById(decodedToken?._id).select("-password -refreshToken").populate('institute');
         let institute = await InstituteModel.findById(decodedToken?._id).select("-password -refreshToken");
 
         // If no matching user, student, or institute, throw error
         if (!user && !student && !institute) {
             throw new ApiError(401, "Unauthorized request - User not found");
         }
-
+//  const user = await UserModel.findById(decoded._id).populate('institute')
         // Assign the correct user object to req.user
-        req.user = user || student || institute;
 
+        // req.user = user || student || institute;
+
+          if (institute) {
+            req.user = institute;
+        } else if (student) {
+            req.user = student;
+        } else {
+            req.user = user;
+        }
+        console.log("Logged-in user:", req.user);
         // Proceed to the next middleware or route handler
         next();  
     } catch (error) {

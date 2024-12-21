@@ -51,6 +51,11 @@ instituteSchema.methods.generateAccessToken = function () {
             name: this.name,
             username: this.username,
             role: this.role,
+            // _id: institute._id,               // Institute's unique ID
+            // name: institute.name,             // Institute's name
+            // username: institute.username,     // Institute's username
+            // role: institute.role,             // Institute's role
+            // instituteName: institute.instituteName,  // Add the instituteName here
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
