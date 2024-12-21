@@ -154,7 +154,7 @@ const RegistrationForm = () => {
                 <div className="mt-6 text-center text-white">
                     <p className="text-lg">
                         Already have an account?{" "}
-                        <Link to="/login" className="text-blue-500 font-semibold">
+                        <Link to="/" className="text-blue-500 font-semibold">
                             Sign In
                         </Link>
                     </p>

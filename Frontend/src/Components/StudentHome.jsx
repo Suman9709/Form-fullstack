@@ -11,7 +11,7 @@ const StudentHome = () => {
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
         if (!token) {
-            navigate("/login"); // Redirect to login if no token is found
+            navigate("/"); // Redirect to login if no token is found
         } else {
             setIsLoggedIn(true); // Token found, user is logged in
         }

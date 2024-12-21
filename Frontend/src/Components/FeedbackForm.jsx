@@ -11,7 +11,7 @@ const FeedbackForm = () => {
     const [suggestions, setSuggestion] = useState("");
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
-    
+     const [selectBatch, setSelectBatch] = useState("");
     useEffect(() => {
         if (successMessage) {
             setTimeout(() => {
@@ -47,6 +47,7 @@ const FeedbackForm = () => {
             firstName: firstname,
             lastName: lastname,
             contact: contact,
+            batch:selectBatch,
             feedback: {
                 overallExperience: Number(overallExperience),
                 satisfactionLevel: Number(satisfactionLevel),
@@ -115,6 +116,23 @@ const FeedbackForm = () => {
                         onChange={(e) => setContact(e.target.value)}
                         required
                     />
+
+<label htmlFor="batch" className="block text-lg font-medium text-white mt-4">
+                        Choose Batch <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                        id="batch"
+                        value={selectBatch}
+                        onChange={(e) => setSelectBatch(e.target.value)}
+                        className="w-full h-[50px] bg-white/10 rounded-sm p-3 mt-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    >
+                        <option value="" className="bg-transparent text-black">Select a Batch</option>
+                        <option value="Basic" className="bg-white/10 hover:bg-blue-200 text-black">Basic</option>
+                        <option value="Intermediate" className="bg-white/10 hover:bg-blue-200 text-black">Intermediate</option>
+                        <option value="Advanced" className="bg-white/10 hover:bg-blue-200 text-black">Advanced</option>
+                        <option value="Other" className="bg-white/10 hover:bg-blue-200 text-black">Other</option>
+                    </select>
 
                     <div className='flex flex-col gap-2 pt-4'>
                         <div className='flex flex-col gap-2'>

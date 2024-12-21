@@ -32,7 +32,7 @@ const Navbar = ({showBatchSelect}) => {
         localStorage.removeItem("lastName");
 
         // Redirect to the login page
-        navigate("/login");
+        navigate("/");
       } else {
         console.error("Logout failed:", data.message);
       }

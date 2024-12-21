@@ -6,7 +6,7 @@ const AdminLogin = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const[error, setError] = useState("")
+  const [error, setError] = useState("")
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -14,23 +14,24 @@ const AdminLogin = () => {
     // Handle login logic here
     try {
       const response = await fetch("http://localhost:5000/users/admin/login", {
-        method:"POST",
-        headers:{
-          "Content-Type":"Application/json"
+        method: "POST",
+        headers: {
+          "Content-Type": "Application/json"
         },
-        body: JSON.stringify({username, email:username, password}),
-        credentials:"include",
+        body: JSON.stringify({ username, email: username, password }),
+        credentials: "include",
       });
 
       const data = await response.json()
+      console.log(data);
 
-      navigate("/AdminHome")
-
-      if(response.status === 201){
+      // Save the tokens in localStorage
+      if (data.data?.accessToken) {
+        localStorage.setItem('accessToken', data.data.accessToken);  // Store accessToken
+        localStorage.setItem('refreshToken', data.data.refreshToken);  // Store refreshToken if needed
         console.log("Admin LoggedIn Successfully", data);
-        
-      }
-      else{
+        navigate("/AdminHome");  // Redirect to Admin Home after login
+      } else {
         setError(data.message)
       }
     } catch (error) {
@@ -78,7 +79,7 @@ const AdminLogin = () => {
           className="w-full h-[50px] bg-white/10 rounded-sm p-3 mt-2 text-white text-sm"
           required
         />
- {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
+        {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
 
         <button
           type="submit"

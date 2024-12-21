@@ -10,12 +10,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path='/login' element={<LoginForm />} />
+        <Route path='/' element={<LoginForm />} />
         <Route path='/Studentsignup' element={<RegistrationForm />} />
         <Route path='/AdminLogin' element={<AdminLogin />} />
         <Route path='/AdminSignup' element={<AdminRegistrationForm />} />
-        <Route path='/StudentHome' element={<StudentHome />} /> {/* Add this route */}
-        <Route path='/AdminHome' element={<AdminHomepage />} /> {/* Add this route */}
+        <Route path='/StudentHome' element={<StudentHome />} /> Add this route
+        <Route path='/AdminHome' element={<AdminHomepage />} /> Add this route
       </Routes>
     </Router>
   )
